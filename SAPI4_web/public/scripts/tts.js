@@ -5,7 +5,7 @@ var SAPI4 =
 		pitch = parseInt(pitch);
 		speed = parseInt(speed);
 
-		let url = "/SAPI4/SAPI4?text=" + encodeURIComponent(text) + "&voice=" + encodeURIComponent(voice) + "&pitch=" + pitch + "&speed=" + speed;
+		let url = "/SAPI4?text=" + encodeURIComponent(text) + "&voice=" + encodeURIComponent(voice) + "&pitch=" + pitch + "&speed=" + speed;
 
 		if (url.length > 4088) {
 			alert("Text too long");
@@ -27,7 +27,7 @@ var SAPI4 =
 
 	VoiceLimitations: async function(voice)
 	{
-		let wav = await fetch("/SAPI4/VoiceLimitations?voice=" + encodeURIComponent(voice));
+		let wav = await fetch("/VoiceLimitations?voice=" + encodeURIComponent(voice));
 		return wav.json();
 	}
 }

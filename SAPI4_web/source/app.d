@@ -55,8 +55,8 @@ void main(string[] args)
 	}
 
 	auto settings = new HTTPServerSettings;
-	settings.port = 23451;
-	settings.bindAddresses = [ "127.0.0.1" ];
+	settings.port = 80;
+	settings.bindAddresses = [ "0.0.0.0" ];
 	listenHTTP(settings, router);
 
 	if (false) {
@@ -76,25 +76,49 @@ class SAMService
 		auto voices = SAMS.keys.sort;
 		render!("index.dt", voices);
 	}
+	
+	@path("/VoiceList")
+	void getVoiceList(HTTPServerRequest req, HTTPServerResponse res)
+	{
+		res.writeJsonBody(SAMS.keys);
+	}
 
 	@path("/VoiceLimitations")
 	void getVoiceLimitations(HTTPServerRequest req, HTTPServerResponse res)
 	{
-		string voice;
-		if ((voice = req.query.get("voice", "")) == "" || !SAMS.keys.canFind(voice)) {
-			res.writeBody("Invalid voice", HTTPStatus.badRequest);
-			return;
+		string voice = req.query.get("voice", "");
+		
+		if (SAMS.keys.canFind(voice)) {
+			auto s = SAMS[voice];
+			res.writeJsonBody([
+				"defPitch": s.defPitch,
+				"minPitch": s.minPitch,
+				"maxPitch": s.maxPitch,
+				"defSpeed": s.defSpeed,
+				"minSpeed": s.minSpeed,
+				"maxSpeed": s.maxSpeed
+			]);
+		}
+		
+		if (voice == "") {
+			int[string][string] voiceLimits;
+			foreach (string voiceName; SAMS.keys) {
+				auto s = SAMS[voice];
+				voiceLimits[voiceName] = [
+					"defPitch": s.defPitch,
+					"minPitch": s.minPitch,
+					"maxPitch": s.maxPitch,
+					"defSpeed": s.defSpeed,
+					"minSpeed": s.minSpeed,
+					"maxSpeed": s.maxSpeed
+				];
+			}
+			res.writeJsonBody(voiceLimits);
 		}
 
-		auto s = SAMS[voice];
-		res.writeJsonBody([
-			"defPitch": s.defPitch,
-			"minPitch": s.minPitch,
-			"maxPitch": s.maxPitch,
-			"defSpeed": s.defSpeed,
-			"minSpeed": s.minSpeed,
-			"maxSpeed": s.maxSpeed
-		]);
+		res.writeBody("Invalid voice", HTTPStatus.badRequest);
+		return;
+
 	}
 
 	@path("/SAPI4")

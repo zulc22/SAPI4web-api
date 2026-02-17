@@ -1,0 +1,7 @@
+*.dll
+*.exe
+*.exp
+*.lib
+*.obj
+**/.dub
+SAPI4_web/sapi4
