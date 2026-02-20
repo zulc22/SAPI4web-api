@@ -40,6 +40,7 @@ SAM[string] SAMS;
 
 void main(string[] args)
 {
+
 	auto router = new URLRouter;
 	router.registerWebInterface(new SAMService);
 	router.get("/*", serveStaticFiles("public/"));
@@ -80,13 +81,30 @@ class SAMService
 	@path("/VoiceList")
 	void getVoiceList(HTTPServerRequest req, HTTPServerResponse res)
 	{
-		res.writeJsonBody(SAMS.keys);
+		res.writeJsonBody(SAMS.keys.sort);
 	}
 
 	@path("/VoiceLimitations")
 	void getVoiceLimitations(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		string voice = req.query.get("voice", "");
+		
+		if (voice == "") {
+			long[string][string] voiceLimits;
+			foreach (string voiceName; SAMS.keys.sort) {
+				auto s = SAMS[voiceName];
+				voiceLimits[voiceName] = [
+					"defPitch": s.defPitch,
+					"minPitch": s.minPitch,
+					"maxPitch": s.maxPitch,
+					"defSpeed": s.defSpeed,
+					"minSpeed": s.minSpeed,
+					"maxSpeed": s.maxSpeed
+				];
+			}
+			res.writeJsonBody(voiceLimits);
+			return;
+		}
 		
 		if (SAMS.keys.canFind(voice)) {
 			auto s = SAMS[voice];
@@ -98,22 +116,7 @@ class SAMService
 				"minSpeed": s.minSpeed,
 				"maxSpeed": s.maxSpeed
 			]);
-		}
-		
-		if (voice == "") {
-			int[string][string] voiceLimits;
-			foreach (string voiceName; SAMS.keys) {
-				auto s = SAMS[voice];
-				voiceLimits[voiceName] = [
-					"defPitch": s.defPitch,
-					"minPitch": s.minPitch,
-					"maxPitch": s.maxPitch,
-					"defSpeed": s.defSpeed,
-					"minSpeed": s.minSpeed,
-					"maxSpeed": s.maxSpeed
-				];
-			}
-			res.writeJsonBody(voiceLimits);
+			return;
 		}
 
 		res.writeBody("Invalid voice", HTTPStatus.badRequest);

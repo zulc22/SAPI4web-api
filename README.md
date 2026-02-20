@@ -1,36 +1,123 @@
-# SAPI4
+In my experience so far; the best luck for building a _WORKING_ 32-bit binary
+was to use the LDC release binary '1.23.0-multilib'. (dub is included)
 
-Web interface for Microsoft Sam &amp; friends written in C & D (vibe-d), runnable on headless linux.
+This is almost certainly required as the DLLs are meant to run in 32-bit mode.
 
-Demo: https://tetyys.com/SAPI4
-
-## Setup
-
-### SAPI4 server compilation on local Windows machine
+# SAPI4 server compilation on local Windows machine
 
 1. Install Microsoft Speech SDK 4.0 (`SAPI4SDK.exe`)
-1. Run `build.bat`. If you have Visual Studio older than 2022, change vcvars32 path
-1. Install [`ldc2`](https://github.com/ldc-developers/ldc/releases) and [`dub`](https://github.com/dlang/dub/releases)
-1. Go to SAPI4_web and compile the web server: `dub --compiler=ldc2 --arch=x86 --build=release`
+2. Run `build.bat`. If you have a different version of VS, change vcvars32 path (fix soon?)
+3. Install [`ldc2`](https://github.com/ldc-developers/ldc/releases)
+4. Go to SAPI4_web and compile the web server: `dub --arch=x86 --build=release`
 
-### Web server compilation & SAPI4 setup on remote Linux machine
+# Web GUI
 
-1. Install `wine` (`sudo apt install wine`), 1.8.7 is fine. If wine doesn't work on your system, you must stop here
-1. In a VNC/RDP session or X11-forwarded SSH connection:
-	* Install Microsoft Speech 4.0 API in the wine environment: `wine spchapi.exe`
-	* Install Lernout & Hauspie TruVoice Amer. Eng. TTS Engine in the wine environment: `wine tv_enua.exe`
-1. Move:	
-	* `public` (static web assets)
-	* `sapi4.exe` (web server)
-	* `sapi4.dll` (SAPI4 voice audio generation library)
-	* `sapi4limits.exe` (SAPI4 voice enumerator)
-	* `sapi4out.exe` (SAPI4 voice audio generation program)
-to a new empty folder
-1. Install `xvfb` (`apt install xvfb`)
-1. Run web server: `while true; do; xvfb-run -a wine sapi4.exe; sleep 1; done;`
-1. Pass the web server through nginx - add this to nginx config: `location ^~ /SAPI4/ { proxy_pass http://127.0.0.1:23451/; }`. Note that the web server will work only on `/SAPI4/` location, if you want to change that, change references to scripts and other assets in `SAPI4_web/views/layout.dt`, `SAPI4_web/public/scripts/tts.js`.
-1. Go to `http(s)://localhost/SAPI4/`, put `soi soi soi soi soi soi soi soi soi soi soi soi soi soi soi soi soi soi soi soi soi` as text, set speed to 450 and enjoy.
+Inherited from parent project. Served on / on the HTTP port specified by the log
+when starting a server.
 
-You might be familiar with Speakonia. As CFS-Technologies have released an unlimited license (http://www.cfs-technologies.com/home/) for Speakonia, you can get .wavs Microsoft Sam & other voices genereated text with Speakonia too, however web interface is more convenient and generates text much faster. Speakonia is set to generate text at real-time of speaking speed and SAPI4 server is set to generate text at x16777215 of real-time speaking speed. You can download .wavs from web interface too (right click the player and press `Save audio as...`, at least on Chrome).
+# API endpoints
 
-You can generate text from an API too, endpoints are `/SAPI4/VoiceLimitations?voice=(voice)` and `/SAPI4/SAPI4?text=(text)[&voice=(voice)][&pitch=(pitch)][&speed=(speed)]`. `()` - required parameters, `[]` - optional parameters.
+## /VoiceList
+
+List all voice names.
+
+### GET /VoiceList
+
+- 200 Found
+
+```jsonc
+["Voice Name 1", "Voice Name 2", ...]
+```
+
+## VoiceLimitations
+
+### GET /VoiceLimitations
+
+- 200 Found
+
+```jsonc
+{ // For each loaded voice:
+	voiceName: {
+		defPitch: number, 
+		minPitch: number,
+		maxPitch: number,
+		defSpeed: number,
+		minSpeed: number,
+		maxSpeed: number
+	}, ...
+}
+```
+
+Returned when voice is blank or not specified.
+
+### GET /VoiceLimitations?voice=[voice]
+
+- 200 Found
+
+```jsonc
+{ // Return limitations for the specified voice
+	defPitch: number, // Default for the 'Pitch' control
+	minPitch: number, // Minimum for the 'Pitch' control
+	maxPitch: number, // Maximum... and so on...
+	defSpeed: number,
+	minSpeed: number,
+	maxSpeed: number
+}
+```
+
+- 400 Bad Request
+
+```
+Invalid voice
+```
+
+Responded with when the voice parameter does not match any loaded voice.
+
+## SAPI4
+This endpoint uses the SAPI4 engine for the main function; text to speech synthesis.
+
+### GET /SAPI4<?text=...&voice=...>[&
+
+- 200 Found
+
+Returns RIFF WAV data. (`audio/wav`)
+
+- 400 Bad Request
+
+```
+Invalid text
+```
+
+Text is either empty or length is more than or equal to 4096 characters.
+
+```
+Invalid pitch/speed
+```
+
+One of the pitch or speed parameters could not be parsed as a number.
+
+```
+Invalid voice
+```
+
+Voice was not specified or the name specified does not match a loaded voice.
+(see /VoiceList and /VoiceLimitations)
+
+```
+Available pitch: [$x ~ $y], got $z
+```
+
+Pitch was not in expected range. (see /VoiceLimitations)
+
+```
+Available speed: [$x ~ $y], got $z
+```
+
+Speed was not in expected range. (see /VoiceLimitations)
+
+```
+Please reformat your text
+```
+
+SAPI4 returned an error while synthesizing speech,
+or exceeded the 10 second timeout to complete speech synthesis.

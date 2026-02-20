@@ -3,5 +3,6 @@
 *.exp
 *.lib
 *.obj
+*.pdb
 **/.dub
 SAPI4_web/sapi4
