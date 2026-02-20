@@ -81,7 +81,7 @@ class SAMService
 	@path("/VoiceList")
 	void getVoiceList(HTTPServerRequest req, HTTPServerResponse res)
 	{
-		res.writeJsonBody(SAMS.keys.sort);
+		res.writeJsonBody(SAMS.keys);
 	}
 
 	@path("/VoiceLimitations")
