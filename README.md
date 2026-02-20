@@ -38,12 +38,12 @@ List all voice names.
 ```jsonc
 { // For each loaded voice:
 	voiceName: {
-		defPitch: number, 
-		minPitch: number,
-		maxPitch: number,
-		defSpeed: number,
-		minSpeed: number,
-		maxSpeed: number
+		"defPitch": number, 
+		"minPitch": number,
+		"maxPitch": number,
+		"defSpeed": number,
+		"minSpeed": number,
+		"maxSpeed": number
 	}, ...
 }
 ```
@@ -56,12 +56,12 @@ Returned when voice is blank or not specified.
 
 ```jsonc
 { // Return limitations for the specified voice
-	defPitch: number, // Default for the 'Pitch' control
-	minPitch: number, // Minimum for the 'Pitch' control
-	maxPitch: number, // Maximum... and so on...
-	defSpeed: number,
-	minSpeed: number,
-	maxSpeed: number
+	"defPitch": number, // Default for the 'Pitch' control
+	"minPitch": number, // Minimum for the 'Pitch' control
+	"maxPitch": number, // Maximum... and so on...
+	"defSpeed": number,
+	"minSpeed": number,
+	"maxSpeed": number
 }
 ```
 
@@ -76,7 +76,7 @@ Responded with when the voice parameter does not match any loaded voice.
 ## SAPI4
 This endpoint uses the SAPI4 engine for the main function; text to speech synthesis.
 
-### GET /SAPI4<?text=...&voice=...>[&
+### GET /SAPI4<?text=...&voice=...>[&pitch=...][&speed=...]
 
 - 200 Found
 
